@@ -1,0 +1,12 @@
+# Binario compilado
+finatiol-backend
+*.exe
+
+# Variables de entorno (contiene secretos)
+.env
+
+# Credenciales Firebase (NUNCA subir al repositorio)
+*.json
+
+# Cache de Go
+vendor/
