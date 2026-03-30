@@ -18,33 +18,52 @@ var (
 )
 
 func InitFirebase() {
-	ctx := context.Background()
+   ctx := context.Background()
 
-	credPath := os.Getenv("FIREBASE_CREDENTIALS_PATH")
-	if credPath == "" {
-		credPath = "../finatiol-firebase-adminsdk-fbsvc-3e52add403.json"
-	}
+   // Primero intenta leer las credenciales desde la variable de entorno FIREBASE_CREDENTIALS_JSON
+   credJSON := os.Getenv("FIREBASE_CREDENTIALS_JSON")
+   var opt option.ClientOption
 
-	opt := option.WithCredentialsFile(credPath)
+   if credJSON != "" {
+	   // Si existe, crea un archivo temporal
+	   tmpFile, err := os.CreateTemp("", "firebase-creds-*.json")
+	   if err != nil {
+		   log.Fatalf("No se pudo crear archivo temporal para credenciales de Firebase: %v", err)
+	   }
+	   defer tmpFile.Close()
 
-	app, err := firebase.NewApp(ctx, nil, opt)
-	if err != nil {
-		log.Fatalf("Error al inicializar Firebase: %v", err)
-	}
+	   _, err = tmpFile.WriteString(credJSON)
+	   if err != nil {
+		   log.Fatalf("No se pudo escribir credenciales en archivo temporal: %v", err)
+	   }
+	   opt = option.WithCredentialsFile(tmpFile.Name())
+   } else {
+	   // Si no existe la variable, usa la ruta por defecto o la variable FIREBASE_CREDENTIALS_PATH
+	   credPath := os.Getenv("FIREBASE_CREDENTIALS_PATH")
+	   if credPath == "" {
+		   credPath = "../finatiol-firebase-adminsdk-fbsvc-3e52add403.json"
+	   }
+	   opt = option.WithCredentialsFile(credPath)
+   }
 
-	FirebaseApp = app
+   app, err := firebase.NewApp(ctx, nil, opt)
+   if err != nil {
+	   log.Fatalf("Error al inicializar Firebase: %v", err)
+   }
 
-	authClient, err := app.Auth(ctx)
-	if err != nil {
-		log.Fatalf("Error al inicializar Firebase Auth: %v", err)
-	}
-	AuthClient = authClient
+   FirebaseApp = app
 
-	firestoreClient, err := app.Firestore(ctx)
-	if err != nil {
-		log.Fatalf("Error al inicializar Firestore: %v", err)
-	}
-	FirestoreClient = firestoreClient
+   authClient, err := app.Auth(ctx)
+   if err != nil {
+	   log.Fatalf("Error al inicializar Firebase Auth: %v", err)
+   }
+   AuthClient = authClient
 
-	log.Println("Firebase inicializado correctamente para proyecto: finatiol")
+   firestoreClient, err := app.Firestore(ctx)
+   if err != nil {
+	   log.Fatalf("Error al inicializar Firestore: %v", err)
+   }
+   FirestoreClient = firestoreClient
+
+   log.Println("Firebase inicializado correctamente para proyecto: finatiol")
 }
